@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Environment variables and credentials
+.env
+.env.*
+credentials.json
+token.json
+client_secret*.json
+*oauth*token*.json
+
+# Editors
+.idea/
+.vscode/
