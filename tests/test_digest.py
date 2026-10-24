@@ -1,6 +1,6 @@
 import importlib.util
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 import unittest
 
 spec = importlib.util.spec_from_file_location('digest', Path(__file__).resolve().parents[1] / 'scripts' / 'digest.py')
@@ -59,6 +59,37 @@ class TestDigest(unittest.TestCase):
         report, engine = digest.generate_report(sample_repos(), '')
         self.assertEqual(engine, 'python')
         self.assertEqual(len(report['top_three']), 3)
+
+
+    def test_gmail_send_confirms_message_id(self):
+        env = {'GMAIL_CLIENT_ID': 'id', 'GMAIL_CLIENT_SECRET': 'secret',
+               'GMAIL_REFRESH_TOKEN': 'refresh', 'EMAIL_FROM': 'from@example.com',
+               'EMAIL_TO': 'to@example.com'}
+        token = Mock(ok=True)
+        token.json.return_value = {'access_token': 'access'}
+        with patch.dict(digest.os.environ, env), \
+             patch.object(digest.requests, 'post', return_value=token), \
+             patch.object(digest, 'request_json', return_value={'id': 'msg-1'}) as send:
+            result = digest.send_gmail('Subject', 'Plain', '<b>HTML</b>')
+        self.assertEqual(result, 'msg-1')
+        self.assertIn('raw', send.call_args.kwargs['data'])
+
+    def test_gmail_missing_configuration_fails_closed(self):
+        with patch.dict(digest.os.environ, {}, clear=True):
+            with self.assertRaisesRegex(RuntimeError, 'Missing Gmail environment variable'):
+                digest.send_gmail('Subject', 'Plain', '<b>HTML</b>')
+
+    def test_gmail_unconfirmed_send_is_error(self):
+        env = {'GMAIL_CLIENT_ID': 'id', 'GMAIL_CLIENT_SECRET': 'secret',
+               'GMAIL_REFRESH_TOKEN': 'refresh', 'EMAIL_FROM': 'from@example.com',
+               'EMAIL_TO': 'to@example.com'}
+        token = Mock(ok=True)
+        token.json.return_value = {'access_token': 'access'}
+        with patch.dict(digest.os.environ, env), \
+             patch.object(digest.requests, 'post', return_value=token), \
+             patch.object(digest, 'request_json', return_value={}):
+            with self.assertRaisesRegex(RuntimeError, 'unconfirmed'):
+                digest.send_gmail('Subject', 'Plain', '<b>HTML</b>')
 
 
 if __name__ == '__main__':
