@@ -5,13 +5,8 @@ on:
       timezone: Europe/Budapest
   workflow_dispatch:
     inputs:
-      test_email:
-        description: 'Only send a test email (does not call OpenAI)'
-        type: boolean
-        default: false
-        required: false
-      dry_run:
-        description: 'Generate a report, but do not send email'
+      force_fallback:
+        description: 'Skip Gemini and generate a Python-only report'
         type: boolean
         default: false
         required: false
@@ -31,23 +26,17 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -r requirements.txt
       - run: python -m unittest discover -s tests
-      - name: Validate and run
+      - name: Generate report (no email)
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
-          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
-          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
-          EMAIL_FROM: rob.pecz@gmail.com
-          EMAIL_TO: rob.pecz@gmail.com
-          OPENAI_MODEL: gpt-4.1-mini
-          INPUT_TEST_EMAIL: ${{ inputs.test_email || 'false' }}
-          INPUT_DRY_RUN: ${{ inputs.dry_run || 'false' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: gemini-2.5-flash-lite
+          FORCE_FALLBACK: ${{ inputs.force_fallback || 'false' }}
         run: python scripts/digest.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ai-github-digest-${{ github.run_number }}
           path: reports/
-          if-no-files-found: ignore
+          if-no-files-found: warn
           retention-days: 30
