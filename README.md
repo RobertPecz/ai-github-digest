@@ -1,4 +1,4 @@
-# Heti AI GitHub-válogatás – Gemini + Python fallback
+# Heti AI GitHub-válogatás – Gemini + Python fallback + Gmail
 
 Minden pénteken 09:17-kor (Europe/Budapest) a GitHub Actions 10–15 releváns GitHub-repóról magyar nyelvű HTML, TXT és JSON jelentést készít. **Ez a változat nem küld e-mailt.** A jelentések az Actions futtatás **Artifacts** részéből tölthetők le (30 napig).
 
@@ -45,3 +45,14 @@ A `GITHUB_TOKEN`-t helyben ne írd be valódi értékkel a shell historyba; hasz
 - Harmadik fél kódja nem fut. A GitHub-leírások nem utasítások.
 - A `scripts/oauth_setup.py` korábbi Gmail-segédprogram megmaradhat a repóban, de ez a workflow nem használja, és nem küld e-mailt.
 - Az időzített workflow a default branchből fut. Publikus repo inaktivitásakor a GitHub deaktiválhatja.
+
+
+## Gmail-küldés (visszakapcsolva)
+
+A heti GitHub Actions futás a Gemini-válogatás vagy Python fallback után automatikusan elküldi a teljes HTML + szöveges jelentést a `rob.pecz@gmail.com` címre. A jelentés az Actions Artifacts között továbbra is elérhető.
+
+A **Settings → Secrets and variables → Actions** alatt szükséges: `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`. A korábban beállított, érvényes OAuth-kulcsok újrahasználhatók. A `GEMINI_API_KEY` továbbra is szükséges a Gemini ághoz; nélküle automatikusan Python fallback fut.
+
+Manuális teszt: Actions → Weekly AI GitHub digest → Run workflow → `force_fallback=false`, `dry_run=false`. A naplóban a `Gmail send confirmed; message ID:` sor jelzi az API-küldés visszaigazolását. A `dry_run=true` létrehozza az artifactokat, de nem küld levelet. Gemini-kvótahiba esetén a Python fallback eredményét küldi el. A Gmail- vagy OAuth-hiba nem némul el, a workflow sikertelen lesz, a jelentés artifactként megmarad.
+
+A `force_fallback=true` **nem** kapcsolja ki az emailt; csak a Geminit kerüli meg. Titkos adatokat soha ne committolj a repositoryba.
