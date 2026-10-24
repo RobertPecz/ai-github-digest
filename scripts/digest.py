@@ -1,10 +1,12 @@
-"""Weekly AI GitHub digest: Gemini Free Tier, deterministic Python fallback, no email."""
+"""Weekly AI GitHub digest: Gemini Free Tier, deterministic Python fallback, Gmail delivery."""
+import base64
 import html
 import json
 import os
 import re
 import sys
 from datetime import datetime, timedelta, timezone
+from email.message import EmailMessage
 from pathlib import Path
 
 import requests
@@ -221,6 +223,42 @@ def render(report, lookup, warnings, engine):
     return subject, '\n'.join(lines), '<html><body>' + '\n'.join(chunks) + '</body></html>'
 
 
+
+def send_gmail(subject, plain, rich):
+    """Send MIME mail via Gmail API; require Gmail message ID confirmation."""
+    config = {}
+    for key in ('GMAIL_CLIENT_ID', 'GMAIL_CLIENT_SECRET', 'GMAIL_REFRESH_TOKEN', 'EMAIL_FROM', 'EMAIL_TO'):
+        value = os.getenv(key, '').strip()
+        if not value:
+            raise RuntimeError(f'Missing Gmail environment variable: {key}')
+        config[key] = value
+    token_response = requests.post('https://oauth2.googleapis.com/token', data={
+        'client_id': config['GMAIL_CLIENT_ID'],
+        'client_secret': config['GMAIL_CLIENT_SECRET'],
+        'refresh_token': config['GMAIL_REFRESH_TOKEN'],
+        'grant_type': 'refresh_token',
+    }, timeout=30)
+    if not token_response.ok:
+        raise RuntimeError(f'Gmail OAuth refresh failed (HTTP {token_response.status_code}); check OAuth credentials')
+    access_token = token_response.json().get('access_token')
+    if not access_token:
+        raise RuntimeError('Gmail OAuth refresh response has no access_token')
+    message = EmailMessage()
+    message['From'] = config['EMAIL_FROM']
+    message['To'] = config['EMAIL_TO']
+    message['Subject'] = subject
+    message.set_content(plain)
+    message.add_alternative(rich, subtype='html')
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode('ascii')
+    result = request_json('POST', 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+        headers={'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json'},
+        data={'raw': raw})
+    if not result.get('id'):
+        raise RuntimeError('Gmail did not return a message ID; delivery is unconfirmed')
+    print(f'Gmail send confirmed; message ID: {result["id"]}')
+    return result['id']
+
+
 def main():
     token = os.getenv('GITHUB_TOKEN', '').strip()
     if not token:
@@ -229,13 +267,17 @@ def main():
     report, engine = generate_report(repos, os.getenv('GEMINI_API_KEY', '').strip(),
                                      os.getenv('FORCE_FALLBACK', '').lower() == 'true')
     lookup = validate_report(report, repos)
-    _, plain, rich = render(report, lookup, warnings, engine)
+    subject, plain, rich = render(report, lookup, warnings, engine)
     REPORTS.mkdir(parents=True, exist_ok=True)
     (REPORTS / 'digest.txt').write_text(plain, encoding='utf-8')
     (REPORTS / 'digest.html').write_text(rich, encoding='utf-8')
     (REPORTS / 'selected.json').write_text(json.dumps({'engine': engine, 'report': report},
                                                       ensure_ascii=False, indent=2), encoding='utf-8')
-    print(f'Digest generated with {engine}; {len(report["items"])} repositories; no email sent.')
+    print(f'Digest generated with {engine}; {len(report["items"])} repositories.')
+    if os.getenv('DRY_RUN', '').lower() == 'true':
+        print('Dry run: report generated; email was not sent.')
+    else:
+        send_gmail(subject, plain, rich)
 
 
 if __name__ == '__main__':
