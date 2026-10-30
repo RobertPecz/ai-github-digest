@@ -1,0 +1,47 @@
+{
+  "fallback": {
+    "examples": {
+      "AI agents / MCP": "Próbáld ki izolált repón, és vizsgáld meg a tool-engedélyeket és a workflow-t.",
+      "QA / Test automation": "Készíts egy kis Playwright/API-teszt PoC-ot, majd mérd a stabilitást.",
+      "Game dev": "Készíts külön játékprototípust, és ellenőrizd a generált asseteket vagy kódot.",
+      "Monetization / RAG / Finance": "Építs kis, nyilvános adatokkal működő PoC-ot, és teszteld a valódi igényt."
+    },
+    "default_use_case": "Vizsgáld meg a dokumentációt és készíts PoC-ot.",
+    "why": "Frissen aktív, a(z) {category} témakörhöz kapcsolódó projekt. A funkciók nem lettek kódszinten auditálva.",
+    "business": "Lehetséges integrációs vagy támogatási szolgáltatás; bizonyított bevétel nem ellenőrzött.",
+    "risk": "Ellenőrizd a licencet, a függőségeket, a jogosultságokat és a karbantartási aktivitást.",
+    "difficulty": "Közepes (becslés, README ellenőrzése nélkül)",
+    "intro": "Szabályalapú Python-válogatás (Gemini nem volt használható: {reason}). A leírások GitHub-metaadatokra épülnek, nem AI-elemzésre."
+  },
+  "rendering": {
+    "subject": "Heti AI GitHub válogatás – {date}",
+    "source": "Forrás",
+    "missing_description": "Nincs megadott leírás",
+    "fields": [
+      [
+        "why",
+        "Miért érdekes"
+      ],
+      [
+        "use_case",
+        "Felhasználási példa"
+      ],
+      [
+        "business",
+        "Üzleti lehetőség"
+      ],
+      [
+        "risk",
+        "Kockázat"
+      ],
+      [
+        "difficulty",
+        "Nehézség"
+      ]
+    ],
+    "top_three": "TOP 3 – első lépések",
+    "plain_warning": "Figyelmeztetés: egyes GitHub keresések hiányosak lehettek.",
+    "html_warning": "Egyes GitHub keresések hiányosak lehettek.",
+    "disclaimer": "Üzleti ötlet ≠ bizonyított bevétel. A forrás GitHub-metaadat, nem kódaudit."
+  }
+}

@@ -1,0 +1,24 @@
+{
+    "CATEGORIES": {
+        "AI agents / MCP": [
+            "topic:mcp-server",
+            "topic:ai-agents",
+            "\"coding agent\" in:description"
+        ],
+        "QA / Test automation": [
+            "\"playwright\" \"ai\" in:description",
+            "\"test generation\" in:description",
+            "\"testing agent\" in:description"
+        ],
+        "Game dev": [
+            "\"unity\" \"ai\" in:description",
+            "\"procedural generation\" in:description",
+            "\"game agent\" in:description"
+        ],
+        "Monetization / RAG / Finance": [
+            "\"micro saas\" in:description",
+            "\"rag\" \"agent\" in:description",
+            "\"algorithmic trading\" in:description"
+        ]
+    }
+}

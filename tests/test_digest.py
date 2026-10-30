@@ -1,96 +1,112 @@
-import importlib.util
+import json
+import os
 from pathlib import Path
-from unittest.mock import patch, Mock
+import subprocess
+import sys
+from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import Mock, patch
 
-spec = importlib.util.spec_from_file_location('digest', Path(__file__).resolve().parents[1] / 'scripts' / 'digest.py')
-digest = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(digest)
-
-
-def sample_repos(count=16):
-    cats = list(digest.CATEGORIES)
-    return [{'name': f'org/repo-{i}', 'url': f'https://github.com/org/repo-{i}',
-             'description': '<script>alert(1)</script>' if i == 0 else 'demo',
-             'category': cats[i % 4], 'stars': i, 'language': 'Python',
-             'license': 'MIT', 'last_push': '2026-10-22T00:00:00Z'} for i in range(count)]
+from ai_digest.application import run_digest
+from ai_digest.configuration import load_content
+from ai_digest.fallback import fallback_report
+from ai_digest.settings import ROOT, Settings
+from tests.support import sample_repos
 
 
 class TestDigest(unittest.TestCase):
-    def test_fallback_is_balanced_and_valid(self):
-        repos = sample_repos()
-        report = digest.fallback_report(repos)
-        digest.validate_report(report, repos)
-        self.assertEqual(len(report['items']), 12)
-        self.assertEqual({r['category'] for r in repos if r['name'] in
-                          {i['name'] for i in report['items']}}, set(digest.CATEGORIES))
+    def setUp(self):
+        self.content = load_content()
+        self.repos = sample_repos()
+        self.directory = TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.reports = Path(self.directory.name) / "reports"
+        self.source = Mock(return_value=(self.repos, []))
+        self.sender = Mock(return_value="message-id")
 
-    def test_render_escapes_untrusted_data(self):
-        repos = sample_repos()
-        report = digest.fallback_report(repos)
-        _, plain, rich = digest.render(report, {r['name']: r for r in repos}, [], 'python')
-        self.assertIn('&lt;script&gt;', rich)
-        self.assertNotIn('<script>', rich)
-        self.assertIn('https://github.com/org/repo-0', plain)
+    def run_digest(self, *, dry_run=False, force_fallback=False, ai_generator=None):
+        return run_digest(
+            Settings("fake-token", dry_run=dry_run, force_fallback=force_fallback,
+                     reports_dir=self.reports),
+            self.content, repository_source=self.source,
+            ai_generator=ai_generator, mail_sender=self.sender,
+        )
 
-    def test_gemini_error_triggers_fallback(self):
-        repos = sample_repos()
-        with patch.object(digest, 'choose_gemini', side_effect=RuntimeError('429')):
-            report, engine = digest.generate_report(repos, 'fake-key')
-        self.assertEqual(engine, 'python')
-        self.assertEqual(len(report['items']), 12)
+    def test_dry_run_writes_all_artifacts_without_sending(self):
+        self.assertEqual(self.run_digest(dry_run=True), "python")
+        self.sender.assert_not_called()
+        self.source.assert_called_once_with("fake-token", self.content.categories)
+        selected = json.loads((self.reports / "selected.json").read_text())
+        self.assertEqual(selected["engine"], "python")
+        self.assertEqual(len(selected["report"]["items"]), 12)
+        self.assertIn("org/repo-0", (self.reports / "digest.txt").read_text())
+        self.assertIn("&lt;script&gt;", (self.reports / "digest.html").read_text())
 
-    def test_valid_gemini_response_is_used(self):
-        repos = sample_repos()
-        report = digest.fallback_report(repos)
-        with patch.object(digest, 'choose_gemini', return_value=report):
-            actual, engine = digest.generate_report(repos, 'fake-key')
-        self.assertEqual(engine, 'gemini')
-        self.assertEqual(actual, report)
+    def test_forced_fallback_still_sends_email(self):
+        generator = Mock(side_effect=AssertionError("AI must not run"))
+        self.assertEqual(self.run_digest(force_fallback=True, ai_generator=generator), "python")
+        generator.assert_not_called()
+        self.sender.assert_called_once()
+        _, plain, rich = self.sender.call_args.args
+        self.assertEqual(plain, (self.reports / "digest.txt").read_text())
+        self.assertEqual(rich, (self.reports / "digest.html").read_text())
 
-    def test_invalid_repositories_are_rejected(self):
-        repos = sample_repos()
-        report = digest.fallback_report(repos)
-        report['items'][0]['name'] = 'unknown/repo'
-        with self.assertRaises(ValueError):
-            digest.validate_report(report, repos)
+    def test_gemini_success_is_persisted(self):
+        report = fallback_report(self.repos, self.content.categories, self.content.fallback)
+        generator = Mock(return_value=report)
+        self.assertEqual(self.run_digest(dry_run=True, ai_generator=generator), "gemini")
+        generator.assert_called_once_with(self.repos)
+        self.assertEqual(
+            json.loads((self.reports / "selected.json").read_text()),
+            {"engine": "gemini", "report": report},
+        )
 
-    def test_missing_key_uses_fallback(self):
-        report, engine = digest.generate_report(sample_repos(), '')
-        self.assertEqual(engine, 'python')
-        self.assertEqual(len(report['top_three']), 3)
+    def test_delivery_failure_preserves_artifacts_and_propagates(self):
+        self.sender.side_effect = RuntimeError("OAuth failed")
+        with self.assertRaisesRegex(RuntimeError, "OAuth failed"):
+            self.run_digest()
+        self.assertEqual(len(list(self.reports.iterdir())), 3)
 
+    def test_invalid_report_is_not_written_or_sent(self):
+        self.source.return_value = (self.repos[:3], [])
+        with self.assertRaisesRegex(ValueError, "10–15"):
+            self.run_digest()
+        self.assertFalse(self.reports.exists())
+        self.sender.assert_not_called()
 
-    def test_gmail_send_confirms_message_id(self):
-        env = {'GMAIL_CLIENT_ID': 'id', 'GMAIL_CLIENT_SECRET': 'secret',
-               'GMAIL_REFRESH_TOKEN': 'refresh', 'EMAIL_FROM': 'from@example.com',
-               'EMAIL_TO': 'to@example.com'}
-        token = Mock(ok=True)
-        token.json.return_value = {'access_token': 'access'}
-        with patch.dict(digest.os.environ, env), \
-             patch.object(digest.requests, 'post', return_value=token), \
-             patch.object(digest, 'request_json', return_value={'id': 'msg-1'}) as send:
-            result = digest.send_gmail('Subject', 'Plain', '<b>HTML</b>')
-        self.assertEqual(result, 'msg-1')
-        self.assertIn('raw', send.call_args.kwargs['data'])
+    def test_storage_failure_prevents_sending(self):
+        self.reports.write_text("not a directory")
+        with self.assertRaises(FileExistsError):
+            self.run_digest()
+        self.sender.assert_not_called()
 
-    def test_gmail_missing_configuration_fails_closed(self):
-        with patch.dict(digest.os.environ, {}, clear=True):
-            with self.assertRaisesRegex(RuntimeError, 'Missing Gmail environment variable'):
-                digest.send_gmail('Subject', 'Plain', '<b>HTML</b>')
+    def test_cli_wires_loaded_settings_and_adapters(self):
+        from ai_digest.cli import main
+        env = {"GITHUB_TOKEN": "token", "GEMINI_API_KEY": "key", "GEMINI_MODEL": "model"}
+        with patch.dict(os.environ, env, clear=True), \
+             patch("ai_digest.cli.load_dotenv"), \
+             patch("ai_digest.cli.run_digest") as run, \
+             patch("ai_digest.cli.choose_gemini", return_value={}) as choose, \
+             patch("ai_digest.cli.send_gmail", return_value="id") as send:
+            main()
+            settings, content = run.call_args.args
+            self.assertEqual(settings.github_token, "token")
+            run.call_args.kwargs["ai_generator"](self.repos)
+            choose.assert_called_once_with(
+                self.repos, api_key="key", model="model", instructions=content.gemini_prompt,
+            )
+            run.call_args.kwargs["mail_sender"]("subject", "plain", "html")
+            send.assert_called_once_with("subject", "plain", "html", config=settings.gmail)
 
-    def test_gmail_unconfirmed_send_is_error(self):
-        env = {'GMAIL_CLIENT_ID': 'id', 'GMAIL_CLIENT_SECRET': 'secret',
-               'GMAIL_REFRESH_TOKEN': 'refresh', 'EMAIL_FROM': 'from@example.com',
-               'EMAIL_TO': 'to@example.com'}
-        token = Mock(ok=True)
-        token.json.return_value = {'access_token': 'access'}
-        with patch.dict(digest.os.environ, env), \
-             patch.object(digest.requests, 'post', return_value=token), \
-             patch.object(digest, 'request_json', return_value={}):
-            with self.assertRaisesRegex(RuntimeError, 'unconfirmed'):
-                digest.send_gmail('Subject', 'Plain', '<b>HTML</b>')
-
-
-if __name__ == '__main__':
-    unittest.main()
+    def test_both_entrypoints_report_missing_token(self):
+        env = dict(os.environ, GITHUB_TOKEN="", PYTHON_DOTENV_DISABLED="1")
+        commands = [
+            ([sys.executable, str(ROOT / "scripts/digest.py")], self.directory.name),
+            ([sys.executable, "-m", "ai_digest"], ROOT),
+        ]
+        for command, cwd in commands:
+            with self.subTest(command=command):
+                result = subprocess.run(command, cwd=cwd, env=env, text=True,
+                                        capture_output=True, timeout=10)
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("ERROR: Missing GITHUB_TOKEN", result.stderr)
