@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Az AI GitHub Digest adatkezelése: Gmail-engedélyek, adattovábbítás, megőrzés és a hozzáférés visszavonása.">
+  <title>Adatkezelési tájékoztató — AI GitHub Digest</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Ugrás a tartalomra</a>
+  <header><div class="wrap header-inner">
+    <a class="brand" href="index.html"><span class="mark" aria-hidden="true">ag</span>AI GitHub Digest</a>
+    <nav aria-label="Fő navigáció"><a href="index.html">Főoldal</a><a href="privacy.html" aria-current="page">Adatkezelés</a><a href="terms.html">Feltételek</a></nav>
+  </div></header>
+  <main id="main" class="wrap legal">
+    <p class="eyebrow">Adatkezelés · Hatályos: 2026. október 30.</p>
+    <h1>Adatkezelési tájékoztató</h1>
+    <p class="lead">Ez a tájékoztató az AI GitHub Digest alkalmazásra és annak bemutatkozó weboldalára vonatkozik.</p>
+    <div class="notice"><p><strong>A hozzáférés célja:</strong> nyilvános GitHub-projektekből készített összefoglaló elküldése az engedélyezett Gmail-fiókból. Az alkalmazás nem olvassa a postaláda tartalmát.</p></div>
+    <h2>1. Üzemeltető és kapcsolat</h2>
+    <p>A projekt fenntartója és az itt leírt adatkezelés kapcsolattartója RobertPecz, a <a href="https://github.com/RobertPecz/ai-github-digest">GitHub-projekt</a> tulajdonosa. Adatkezelési kérdések és törlési kérelmek: <a href="mailto:rob.pecz@gmail.com">rob.pecz@gmail.com</a>.</p>
+    <p>A projekt jelenleg személyes automatizálás, nyilvános felhasználói regisztráció nélkül.</p>
+    <h2>2. Milyen adatokat használ az alkalmazás?</h2>
+    <ul>
+      <li><strong>Nyilvános GitHub-metaadatok:</strong> projektnevek, URL-ek, leírások, témák, programozási nyelvek, csillagszámok, aktivitási időpontok és licencazonosítók.</li>
+      <li><strong>Google OAuth-hitelesítés:</strong> OAuth-kliensadatok, refresh token és a küldéshez szükséges rövid élettartamú access token.</li>
+      <li><strong>Levélküldési adatok:</strong> a beállított feladó és címzett e-mail-címe, a generált levél tárgya, HTML- és szöveges tartalma, valamint a Gmail által visszaadott üzenetazonosító.</li>
+      <li><strong>Működési adatok:</strong> futási állapotok, hibajelzések és küldési visszaigazolások a futtatási naplóban.</li>
+    </ul>
+    <h2>3. Google-jogosultság és felhasználási cél</h2>
+    <p>Az alkalmazás a <code>https://www.googleapis.com/auth/gmail.send</code> jogosultságot kéri, hogy az engedélyező fiók nevében elküldhesse a jelentést a beállított címzettnek. Az OAuth-engedélyezést a fiók tulajdonosa kezdeményezi. A token az ismétlődő, felügyelet nélküli küldéshez szükséges.</p>
+    <p>A program nem kér hozzáférést a beérkező levelek, a névjegyek vagy a Google Drive olvasásához. A Google-adatokat nem használja reklámcélra, profilalkotásra vagy AI-modellek tanítására, és nem értékesíti azokat.</p>
+    <h2>4. Kinek továbbítunk adatot?</h2>
+    <ul>
+      <li><strong>Google OAuth és Gmail API:</strong> a hitelesítési kérelmeket, illetve az elküldendő levél adatait a Google dolgozza fel. A levél tartalmát a beállított címzett is megkapja.</li>
+      <li><strong>GitHub Actions:</strong> a heti automatizálást a GitHub futtatja. A tartós hitelesítő adatok a repository Actions secrets beállításaiban, a futás idején pedig a program környezetében érhetők el.</li>
+      <li><strong>Google Gemini API:</strong> ha az AI-értékelés engedélyezett, kizárólag a kiválasztott nyilvános GitHub-metaadatok és az értékelési utasítás kerülnek a modellhez. A Gmail-tokenek, a feladó és címzett e-mail-címe, valamint postaládatartalom nem részei ennek a kérésnek.</li>
+    </ul>
+    <p>A szolgáltatók saját adatkezelési feltételei is alkalmazandók: <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub adatvédelmi nyilatkozat</a>, <a href="https://policies.google.com/privacy">Google adatvédelmi irányelvek</a>.</p>
+    <h2>5. Tárolás és megőrzés</h2>
+    <ul>
+      <li>A refresh token és az OAuth-kliens titka az Actions secrets között marad, amíg az üzemeltető nem törli vagy cseréli. Az access tokent a program csak a futás során, memóriában használja.</li>
+      <li>A HTML-, TXT- és JSON-jelentések GitHub Actions-artifactként 30 napos megőrzéssel készülnek. Ezek nyilvános GitHub-adatokból képzett tartalmak; OAuth-tokeneket nem tartalmaznak.</li>
+      <li>A futási naplók megőrzését a repository GitHub Actions-beállításai határozzák meg. Sikeres küldésnél a Gmail üzenetazonosítója bekerül a naplóba.</li>
+      <li>A helyben futtatott program jelentései és a helyi OAuth-beállító fájlok a kézi törlésükig megmaradhatnak.</li>
+      <li>Az elküldött és kézbesített levelek megőrzése az érintett levelezőfiókok beállításaitól és a felhasználók törlési műveleteitől függ.</li>
+    </ul>
+    <h2>6. Hozzáférés visszavonása és törlés</h2>
+    <p>A Google-hozzáférést a <a href="https://myaccount.google.com/connections">Google-fiók harmadik felekkel fennálló kapcsolatai</a> között bármikor visszavonhatod. Ez megszünteti az alkalmazás további Gmail-hozzáférését, de a már elküldött leveleket nem törli.</p>
+    <p>A további tárolás megszüntetéséhez az üzemeltető törli a kapcsolódó Actions secreteket és a helyi hitelesítő fájlokat; szükség szerint a futási naplók és artifactok is törölhetők. A levelek törlését az érintett postafiókban kell elvégezni. Kérdéshez, az alkalmazás által kezelt saját adatok megismeréséhez, helyesbítéséhez vagy törlési kérelemhez írj a <a href="mailto:rob.pecz@gmail.com">rob.pecz@gmail.com</a> címre.</p>
+    <h2>7. A weboldal látogatása</h2>
+    <p>Ez a statikus weboldal nem tartalmaz regisztrációt, űrlapot, saját analitikai vagy reklámkövető kódot, és nem állít be saját sütiket. A GitHub Pages tárhelyszolgáltató a kiszolgálás és a biztonság érdekében technikai adatokat, például IP-címet és kérési naplókat kezelhet a saját adatvédelmi nyilatkozata szerint.</p>
+    <h2>8. Google API-adatok korlátozott felhasználása</h2>
+    <p>Az AI GitHub Digest a Google API-kból származó információkat kizárólag a fent ismertetett levélküldési funkcióhoz használja és továbbítja. Ezen adatok felhasználása a <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a> előírásaihoz, köztük a Limited Use követelményekhez igazodik.</p>
+    <h2>9. Változások</h2>
+    <p>A tájékoztató a projekt működésének változásakor frissül. Új Google-jogosultság vagy az engedélyezettől eltérő adatfelhasználás előtt a tájékoztatást és szükség esetén az engedélykérést is frissíteni kell. Az aktuális változat ezen az oldalon érhető el.</p>
+  </main>
+  <footer><div class="wrap footer-inner"><span>AI GitHub Digest · Kapcsolat: <a href="mailto:rob.pecz@gmail.com">rob.pecz@gmail.com</a></span><div class="footer-links"><a href="index.html">Főoldal</a><a href="privacy.html">Adatkezelési tájékoztató</a><a href="terms.html">Használati feltételek</a></div></div></footer>
+</body>
+</html>

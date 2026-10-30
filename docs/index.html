@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Az AI GitHub Digest nyilvános GitHub-projektekből készít heti magyar összefoglalót, és engedélyezett Gmail-fiókon keresztül kézbesíti.">
+  <meta name="theme-color" content="#1c302c">
+  <title>AI GitHub Digest — heti fejlesztői válogatás</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Ugrás a tartalomra</a>
+  <header><div class="wrap header-inner">
+    <a class="brand" href="index.html" aria-label="AI GitHub Digest főoldal"><span class="mark" aria-hidden="true">ag</span>AI GitHub Digest</a>
+    <nav aria-label="Fő navigáció"><a href="#mukodes">Működés</a><a href="privacy.html">Adatkezelés</a><a href="terms.html">Feltételek</a></nav>
+  </div></header>
+  <main id="main" class="wrap">
+    <section class="hero" aria-labelledby="title">
+      <div>
+        <p class="eyebrow">Nyilvános projektek · Magyar összefoglaló</p>
+        <h1 id="title">Kevesebb keresés.<br><em>Több kipróbálható ötlet.</em></h1>
+        <p class="lead">Heti válogatás aktív GitHub-projektekből. Fejlesztői eszközök, tesztautomatizálás és AI-ötletek, gyakorlati példákkal és világosan jelzett korlátokkal.</p>
+        <div class="actions"><a class="button" href="#mukodes">Így készül a válogatás <span aria-hidden="true">↗</span></a><a href="https://github.com/RobertPecz/ai-github-digest">Forráskód a GitHubon</a></div>
+      </div>
+      <aside class="edition" aria-label="A válogatás témái">
+        <div class="edition-top"><span>AI GITHUB DIGEST</span><span>HETI VÁLOGATÁS</span></div>
+        <h2>Négy terület.<br>Egy olvasható összefoglaló.</h2>
+        <p>A jelentés témakörei:</p>
+        <div class="topic"><span>01</span>AI-ügynökök és MCP</div>
+        <div class="topic"><span>02</span>QA és tesztautomatizálás</div>
+        <div class="topic"><span>03</span>Játékfejlesztés és Unity</div>
+        <div class="topic"><span>04</span>Üzleti ötletek, RAG és pénzügyi kutatás</div>
+      </aside>
+    </section>
+    <div class="facts" aria-label="A jelentés jellemzői">
+      <div><strong>10–15 projekt</strong><span>egy sikeres heti jelentésben</span></div>
+      <div><strong>Magyar nyelven</strong><span>példákkal és első lépésekkel</span></div>
+      <div><strong>HTML · TXT · JSON</strong><span>olvasható és feldolgozható formában</span></div>
+    </div>
+    <section class="section" id="mukodes" aria-labelledby="how-title">
+      <p class="eyebrow">A nyilvános repótól a postaládáig</p>
+      <h2 id="how-title">Hogyan működik?</h2>
+      <ol class="steps">
+        <li><span class="number">01 / FELFEDEZÉS</span><h3>Frissen aktív projektek</h3><p>A keresés az elmúlt nyolc napban aktív, nyilvános GitHub-repókat gyűjti össze négy témakörben.</p></li>
+        <li><span class="number">02 / VÁLOGATÁS</span><h3>Értelmezhető összefoglaló</h3><p>A Gemini a nyilvános metaadatokból készít értékelést. Ha nem elérhető, szabályalapú Python-válogatás készül, egyértelműen jelezve az eltérő módszert.</p></li>
+        <li><span class="number">03 / KÉZBESÍTÉS</span><h3>A beállított címzettnek</h3><p>A program elmenti a jelentést, majd az engedélyezett Gmail-fiókon keresztül elküldi. A küldés nélküli futtatás is támogatott.</p></li>
+      </ol>
+    </section>
+    <section class="section access" aria-labelledby="access-title">
+      <div><p class="eyebrow">Átlátható hozzáférés</p><h2 id="access-title">Mire használjuk<br>a Google-engedélyt?</h2><p>A Gmail-hozzáférés célja az elkészült heti jelentés elküldése a fiók tulajdonosának engedélyével.</p><a href="privacy.html">A teljes adatkezelési tájékoztató <span aria-hidden="true">→</span></a></div>
+      <div><ul><li><strong>Kizárólag levélküldés:</strong> a kért jogosultság <code>gmail.send</code>.</li><li><strong>Nincs postaláda-olvasás:</strong> az alkalmazás nem kér jogosultságot a beérkező levelek, névjegyek vagy Drive-fájlok olvasásához.</li><li><strong>Elkülönített AI-feldolgozás:</strong> a Gemini nyilvános GitHub-metaadatokat kap; Gmail-hitelesítő adatot és postaládatartalmat nem.</li><li><strong>Visszavonható engedély:</strong> a hozzáférés a Google-fiók kapcsolatai között megszüntethető.</li></ul></div>
+    </section>
+    <section class="section" aria-labelledby="questions-title">
+      <h2 id="questions-title">Amit érdemes tudni</h2>
+      <details><summary>Lehet itt regisztrálni vagy feliratkozni?</summary><p>A projekt jelenleg személyes automatizálás. Ez az oldal a működését és adatkezelését mutatja be; nincs nyilvános regisztráció vagy hírlevél-feliratkozás.</p></details>
+      <details><summary>A válogatás ellenőrzött ajánlás?</summary><p>A leírások GitHub-metaadatokra épülnek, és nem jelentenek kódauditot. A licenceket, függőségeket és a projektek tényleges működését használat előtt külön ellenőrizni kell. Az üzleti ötletek nem igazolt bevételi ígéretek.</p></details>
+      <details><summary>A Google vagy a GitHub hivatalos szolgáltatása?</summary><p>Nem. Az AI GitHub Digest független projekt, amely a GitHub és a Google API-jait használja. A megnevezések a használt szolgáltatásokat azonosítják, és nem jelentenek jóváhagyást vagy partnerséget.</p></details>
+    </section>
+    <section class="section contact" aria-labelledby="contact-title"><div><h2 id="contact-title">Kérdésed van?</h2><p>Fenntartó: RobertPecz, az AI GitHub Digest projekt tulajdonosa.</p></div><a href="mailto:rob.pecz@gmail.com">rob.pecz@gmail.com <span aria-hidden="true">↗</span></a></section>
+  </main>
+  <footer><div class="wrap footer-inner"><span>AI GitHub Digest · Független fejlesztői projekt</span><div class="footer-links"><a href="privacy.html">Adatkezelési tájékoztató</a><a href="terms.html">Használati feltételek</a><a href="https://github.com/RobertPecz/ai-github-digest">GitHub</a></div></div></footer>
+</body>
+</html>
