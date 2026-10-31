@@ -1,8 +1,25 @@
-# Weboldal és Gmail OAuth production beállítás
+# Gmail OAuth személyes használatra, saját domain nélkül
+
+A választott beállítás a Google **személyes használati kivétele**: az alkalmazást az üzemeltető a saját Gmail-fiókjával használja. Ehhez nem kell saját domaint vásárolni vagy az alkalmazást Google-verifikációra beküldeni. A kivétel néhány, személyesen ismert felhasználó esetén is alkalmazható; az ellenőrizetlen alkalmazások felhasználói korlátja továbbra is érvényes.
+
+Az **In production publishing státusz** és a **Google-verifikáció** külön beállítás. A személyes alkalmazás lehet In production státuszú és ellenőrizetlen. A Google OAuth-szabályzatában a production alkalmazásokra előírt domain- és ellenőrzési követelmények hatálya külön kizárja a személyes használatot. Ha az alkalmazás később nyilvános szolgáltatássá válik, újra kell vizsgálni ezeket a követelményeket.
+
+## Google Cloud beállítása
+
+1. Válaszd ki a meglévő OAuth-klienshez és a helyi `credentials.json` fájlhoz tartozó Cloud-projektet.
+2. **Google Auth Platform → Audience:** a felhasználótípus maradjon **External**. A személyes Gmail-fiók nem Workspace Internal alkalmazás.
+3. Az Audience oldalon kattints a **Publish app** gombra, és állítsd a publishing státuszt **In production** állapotra. Ez külön művelet a Branding oldal **Publish branding** gombjától.
+4. **Data Access:** a program jogosultsága kizárólag `https://www.googleapis.com/auth/gmail.send` legyen.
+5. Az alkalmazásnév és a kapcsolattartói e-mail maradjon valós. A személyes használati kivételhez nem kell külön jóváhagyási kérelmet beadni, saját domaint bekötni vagy brand-verifikációt indítani.
+6. Az átállás után végezd el az alábbi egyszeri újraengedélyezést, majd frissítsd a GitHub Actions secretjeit.
+
+Az OAuth-engedélyezéskor megjelenhet a **Google hasn't verified this app** figyelmeztetés. A saját alkalmazásodnál az **Advanced / Speciális → Go to … / Tovább …** lehetőséggel folytathatod, ha a Google ezt felajánlja. A személyes használati kivétel ezt a figyelmeztetést nem tünteti el.
+
+Ezek beállítási lépések; az útmutató módosítása önmagában nem változtatja meg a Cloud-projektet vagy a GitHub secreteket. Ha a felület megakadályozza az átállást, a pontos hiba alapján kell tisztázni az okot.
+
+## Meglévő bemutatkozó oldalak
 
 A statikus bemutatkozó weboldal forrása a `docs/` könyvtár. Nem igényel buildet, JavaScriptet vagy saját háttérszolgáltatást. A repository GitHub Pages-beállítása: `master` ág, `/docs` forráskönyvtár.
-
-## A három nyilvános oldal
 
 Az alapértelmezett GitHub Pages-címen:
 
@@ -14,30 +31,11 @@ Az alapértelmezett GitHub Pages-címen:
 
 Ezek a weboldal címei, nem OAuth-visszahívási URL-ek. A helyi `scripts/oauth_setup.py` Desktop app típusú OAuth-klienssel működik.
 
-**A Pages-publikálás önmagában nem jelent Google-ellenőrzést.** A Google saját, igazolt domainen kéri a production alkalmazás bemutatkozó oldalát. A `github.io` szolgáltatói cím nem helyettesíti a saját domain tulajdonjogának igazolását. A végleges Branding-beállításhoz a saját domainhez tartozó három URL-t használd.
+Az oldalak tájékoztatásra továbbra is használhatók. A GitHub Pages-publikálás nem jelent Google-verifikációt, és nem feltétele a fent leírt személyes használati beállításnak.
 
-## Saját domain bekötése
+## Egyszeri újraengedélyezés és refresh token cseréje
 
-1. Válassz egy ténylegesen birtokolt domaint vagy aldomaint, például `digest.sajatdomain.hu` — ez itt csak példa.
-2. A GitHub Pages domainellenőrzéséhez add hozzá a GitHub által kiadott TXT rekordot. Ez külön ellenőrzés a Google Search Console-tól.
-3. A repository **Settings → Pages → Custom domain** mezőjében állítsd be a domaint. Ezután a DNS-szolgáltatónál az aldomain CNAME rekordja mutasson a `robertpecz.github.io` névre, repository-útvonal nélkül. Gyökérdomain esetén a GitHub dokumentációjában szereplő A/ALIAS/ANAME beállítás szükséges.
-4. Várd meg a DNS-ellenőrzést és a tanúsítványt; kapcsold be az **Enforce HTTPS** lehetőséget.
-5. A Google Search Console-ban a Cloud-projekt Owner vagy Editor Google-fiókjával igazold a domaint, például a kapott DNS TXT rekorddal. Ne használj kitalált ellenőrzőkódot.
-6. Ellenőrizd a főoldalt és a két tájékoztató oldalt kijelentkezve is. A relatív linkek a saját domainen is működnek.
-
-## Google Cloud
-
-1. A helyi `credentials.json` fájlhoz tartozó Cloud-projektet válaszd ki. A fájlt ne tedd közzé.
-2. **Google Auth Platform → Branding:** alkalmazásnév `AI GitHub Digest`; support e-mail az üzemeltető által figyelt cím; a saját domain szerepeljen az **Authorized domains** listában; add meg a végleges home/privacy/terms URL-eket.
-3. **Data Access:** a program Google-jogosultsága kizárólag `https://www.googleapis.com/auth/gmail.send`. Ne bővítsd postaláda-olvasásra.
-4. **Audience:** a saját, személyes Gmail-fiók használata általában External alkalmazást jelent. A **Publish app** állítja át a publishing státuszt **In production** állapotra. Ez nem azonos a Branding vagy a sensitive scope ellenőrzésének sikerével.
-5. Ha csak az üzemeltető vagy néhány személyesen ismert felhasználó használja, vizsgáld meg a Google személyes használati kivételét. Ha ellenőrzés szükséges, a **Verification Center** tényleges kéréseit kövesd; kérhet indoklást és a jogosultság használatát bemutató videót is.
-
-A domain és a felületen látható hiba ismerete nélkül nem állapítható meg, hogy a hiányzó branding, a Testing státusz, a token lejárata vagy más hitelesítési probléma akadályozza a futást.
-
-## Lejárt refresh token cseréje
-
-External / Testing állapotban a Gmail-jogosultsághoz kiadott refresh token 7 nap után lejárhat a Google tesztelési szabálya szerint. Ha a régi token lejárt, a production státusz beállítása után kérj újat:
+External / Testing állapotban a Gmail-jogosultsághoz adott engedély és refresh token 7 nap után lejár. Az In production státusz beállítása után kérj új tokent, hogy már ne a Testing korlátja vonatkozzon rá:
 
 ```bash
 .venv/bin/python scripts/oauth_setup.py
@@ -54,4 +52,4 @@ A hitelesítés és a kézbesítés tényleges tesztje a heti workflow kézi fut
 - [Google OAuth branding és domainkövetelmények](https://support.google.com/cloud/answer/15549049?hl=en)
 - [Audience és a Testing mód korlátai](https://support.google.com/cloud/answer/15549945?hl=en)
 - [Sensitive scope ellenőrzés és személyes használati kivételek](https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification)
-- [GitHub Pages saját domain](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site)
+- [Google OAuth-szabályzat és a személyes használat meghatározása](https://developers.google.com/identity/protocols/oauth2/policies)

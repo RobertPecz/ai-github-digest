@@ -11,7 +11,7 @@ Minden pénteken 09:17-kor (Europe/Budapest) a GitHub Actions 10–15 releváns 
 
 ## Beállítás
 
-A projekt bemutatkozó oldala, adatkezelési tájékoztatója és használati feltételei a `docs/` könyvtárban találhatók. A GitHub Pages-publikálás, a saját domain és a Gmail OAuth production átállás lépéseit a [beállítási útmutató](guides/oauth-production.md) tartalmazza.
+A projekt bemutatkozó oldala, adatkezelési tájékoztatója és használati feltételei a `docs/` könyvtárban találhatók. A Gmail OAuth beállításához a személyes használati kivételt alkalmazzuk: saját domain és Google-verifikáció nélkül, **In production** publishing státusszal. A feltételeket és az egyszeri újraengedélyezés lépéseit a [beállítási útmutató](guides/oauth-production.md) tartalmazza.
 
 1. Nyisd meg a [Google AI Studio API Keys](https://aistudio.google.com/api-keys) felületet, és hozz létre Gemini API-kulcsot olyan projektben, amely jogosult a Free Tierre.
 2. GitHub → **Settings → Secrets and variables → Actions → New repository secret**: `GEMINI_API_KEY` = az API-kulcs értéke. Soha ne commitold vagy másold chatbe.
